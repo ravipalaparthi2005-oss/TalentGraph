@@ -40,12 +40,15 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
 
-# AI Provider Configuration Placeholder
-talentgraph:
-  ai:
-    provider: ${AI_PROVIDER:openrouter}
-    model: ${AI_MODEL:openrouter/free}
-    api-key: ${OPENROUTER_API_KEY:}
+# AI Provider Configuration — OpenRouter
+# Uses @ConfigurationProperties(prefix = "openrouter") in OpenRouterProperties
+openrouter:
+  api-key: ${OPENROUTER_API_KEY:}
+  base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+  model: ${OPENROUTER_MODEL:openrouter/free}
+  timeout-seconds: ${OPENROUTER_TIMEOUT_SECONDS:60}
+  max-response-chars: 32000
+  analysis-enabled: ${AI_RESUME_ANALYSIS_ENABLED:true}
 
 # External API Placeholders
 github:
@@ -54,3 +57,4 @@ github:
 judge0:
   api-url: ${JUDGE0_API_URL:https://judge0-ce.p.rapidapi.com}
   api-key: ${JUDGE0_API_KEY:}
+
