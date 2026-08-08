@@ -1,0 +1,16 @@
+package com.talentgraph.evidence;
+
+public enum EvidenceType {
+    SKILL_MENTION,
+    PROJECT,
+    COMMIT_ACTIVITY,
+    REPOSITORY,
+    CODE_SUBMISSION,
+    TEST_RESULT,
+    INTERVIEW_RESPONSE,
+    INTERVIEW_EVALUATION,
+    CERTIFICATION,
+    EMPLOYMENT,
+    MANUAL_OBSERVATION,
+    OTHER
+}

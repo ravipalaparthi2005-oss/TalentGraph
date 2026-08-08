@@ -1,0 +1,9 @@
+spring:
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.talentgraph: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
