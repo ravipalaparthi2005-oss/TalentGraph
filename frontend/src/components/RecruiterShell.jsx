@@ -9,6 +9,7 @@ const RecruiterShell = ({ children }) => {
   const location = useLocation();
 
   const isJobsActive = location.pathname === '/app' || location.pathname.startsWith('/app/jobs');
+  const isCandidatesActive = location.pathname.startsWith('/app/candidates');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -40,6 +41,17 @@ const RecruiterShell = ({ children }) => {
               >
                 <Briefcase className="w-4 h-4" />
                 <span>Jobs</span>
+              </Link>
+              <Link
+                to="/app/candidates"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  isCandidatesActive
+                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                <span>Candidates</span>
               </Link>
             </nav>
           </div>

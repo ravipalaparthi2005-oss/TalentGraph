@@ -94,6 +94,18 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!-- Document Parsing: Apache PDFBox & Apache POI OOXML -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
         <!-- H2 Database for DataJpaTest -->
         <dependency>
             <groupId>com.h2database</groupId>

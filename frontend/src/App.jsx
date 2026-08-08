@@ -10,6 +10,9 @@ import JobsPage from './pages/JobsPage';
 import CreateJobPage from './pages/CreateJobPage';
 import JobDetailPage from './pages/JobDetailPage';
 import EditJobPage from './pages/EditJobPage';
+import CandidatesPage from './pages/CandidatesPage';
+import CreateCandidatePage from './pages/CreateCandidatePage';
+import CandidateDetailPage from './pages/CandidateDetailPage';
 
 export default function App() {
   return (
@@ -51,6 +54,31 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <EditJobPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/app/candidates"
+            element={
+              <ProtectedRoute>
+                <CandidatesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/candidates/new"
+            element={
+              <ProtectedRoute>
+                <CreateCandidatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/candidates/:candidateId"
+            element={
+              <ProtectedRoute>
+                <CandidateDetailPage />
               </ProtectedRoute>
             }
           />

@@ -72,8 +72,8 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Validation failed: " + errors));
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+    @ExceptionHandler({IllegalArgumentException.class, org.springframework.web.multipart.MaxUploadSizeExceededException.class, org.springframework.web.multipart.MultipartException.class})
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(Exception ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ex.getMessage()));
     }

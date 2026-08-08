@@ -46,6 +46,7 @@ backend/.settings/
 # Database data mounts
 infra/postgres-data/
 
-# Temporary files
+# Temporary files & local file storage
+storage/
 scratch/
 tmp/

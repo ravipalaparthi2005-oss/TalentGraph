@@ -82,3 +82,23 @@ export const getJobActivity = async (jobId) => {
   const response = await api.get(`/jobs/${jobId}/activity`);
   return response.data;
 };
+
+const jobService = {
+  createJob,
+  getJobs,
+  getJobById,
+  updateJob,
+  updateJobStatus,
+  deleteJob,
+  getJobRequirements,
+  addJobRequirement,
+  updateJobRequirement,
+  deleteJobRequirement,
+  getJobCriteria,
+  addJobCriterion,
+  updateJobCriterion,
+  deleteJobCriterion,
+  getJobActivity,
+};
+
+export default jobService;
