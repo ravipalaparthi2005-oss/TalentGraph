@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Github, Linkedin, Globe, FileText, Download, CheckCircle, AlertTriangle, Briefcase, Plus, RefreshCw, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Github, Linkedin, Globe, FileText, Download, CheckCircle, AlertTriangle, Briefcase, Plus, RefreshCw, ArrowLeft, ChevronDown, ChevronUp, Sparkles, Brain, Quote, AlertCircle, Clock, Loader } from 'lucide-react';
 import candidateService from '../services/candidateService';
 import documentService from '../services/documentService';
 import applicationService from '../services/applicationService';
 import jobService from '../services/jobService';
+import aiAnalysisService from '../services/aiAnalysisService';
 
 export default function CandidateDetailPage() {
   const { candidateId } = useParams();
@@ -18,6 +19,10 @@ export default function CandidateDetailPage() {
   const [showRawTextId, setShowRawTextId] = useState(null);
   const [selectedJobId, setSelectedJobId] = useState('');
   const [applyingJob, setApplyingJob] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  const [activeDocId, setActiveDocId] = useState(null);
 
   const fetchCandidateDetails = async () => {
     setLoading(true);
@@ -320,25 +325,182 @@ export default function CandidateDetailPage() {
           </div>
         </div>
 
-        {/* Right Column: Evidence Summary */}
+        {/* Right Column: AI Resume Intelligence */}
         <div className="space-y-6">
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
             <h2 className="text-base font-semibold text-slate-200 border-b border-slate-800 pb-3 flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-400" /> Evidence Graph Intake
+              <Brain className="w-4 h-4 text-purple-400" /> Resume Intelligence
             </h2>
-            <p className="text-xs text-slate-400">
-              Deterministic skill mentions extracted directly from uploaded resume documents. Zero hallucinated skills or synthetic scores.
-            </p>
 
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-2">
-              <div className="text-xs font-medium text-slate-300 flex justify-between">
-                <span>Ingestion Mode</span>
-                <span className="text-emerald-400 font-mono">DETERMINISTIC</span>
+            {/* Privacy notice */}
+            <div className="flex items-start gap-2 p-2.5 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-amber-300/80">
+                Resume text is sent to the configured AI provider for extraction. All AI claims are validated against the source document before storage.
+              </p>
+            </div>
+
+            {/* Select document to analyze */}
+            {documents.length > 0 && (
+              <div className="space-y-3">
+                <label className="text-xs font-medium text-slate-400">Analyze Document</label>
+                <select
+                  value={activeDocId || ''}
+                  onChange={e => { setActiveDocId(e.target.value); setAiAnalysis(null); setAiError(null); }}
+                  className="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="">Select a processed document…</option>
+                  {documents.filter(d => d.processingStatus === 'PROCESSED').map(d => (
+                    <option key={d.id} value={d.id}>{d.originalFilename}</option>
+                  ))}
+                </select>
+
+                {activeDocId && (
+                  <button
+                    onClick={async () => {
+                      setAiAnalyzing(true);
+                      setAiError(null);
+                      try {
+                        const result = await aiAnalysisService.triggerAnalysis(candidateId, activeDocId, false);
+                        setAiAnalysis(result);
+                      } catch (err) {
+                        setAiError(err.response?.data?.message || 'AI analysis could not be completed.');
+                      } finally {
+                        setAiAnalyzing(false);
+                      }
+                    }}
+                    disabled={aiAnalyzing}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
+                  >
+                    {aiAnalyzing ? (
+                      <><Loader className="w-3.5 h-3.5 animate-spin" /> Analyzing resume…</>
+                    ) : (
+                      <><Sparkles className="w-3.5 h-3.5" /> Analyze Resume</>
+                    )}
+                  </button>
+                )}
               </div>
-              <div className="text-xs font-medium text-slate-300 flex justify-between">
-                <span>LLM Extraction</span>
-                <span className="text-slate-500 font-mono">DISABLED (PHASE 05)</span>
+            )}
+
+            {aiError && (
+              <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-red-300">{aiError}</p>
               </div>
+            )}
+
+            {/* AI Analysis Results */}
+            {aiAnalysis && aiAnalysis.status === 'COMPLETED' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                  <span className="font-mono">{aiAnalysis.provider} · {aiAnalysis.model}</span>
+                  <span className="text-emerald-400">✓ COMPLETED</span>
+                </div>
+
+                {aiAnalysis.summary && (
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <p className="text-xs text-slate-300 leading-relaxed">{aiAnalysis.summary}</p>
+                  </div>
+                )}
+
+                {/* Skills */}
+                {aiAnalysis.skills?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Skills Found</h3>
+                    {aiAnalysis.skills.map(s => (
+                      <div key={s.id} className={`p-2.5 rounded-lg border text-xs space-y-1 ${
+                        s.validated ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-slate-800 bg-slate-950/50'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-slate-200">{s.skillName}</span>
+                          {s.validated
+                            ? <span className="text-[10px] text-emerald-400 font-mono">MATCHED</span>
+                            : <span className="text-[10px] text-slate-500 font-mono">UNMATCHED</span>}
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-400">
+                          <Quote className="w-3 h-3 mt-0.5 shrink-0 text-slate-600" />
+                          <span className="italic text-[11px]">{s.evidenceQuote}</span>
+                        </div>
+                        {s.sourceSection && <span className="text-[10px] text-slate-600">{s.sourceSection}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Experience */}
+                {aiAnalysis.experiences?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Experience</h3>
+                    {aiAnalysis.experiences.map(e => (
+                      <div key={e.id} className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/50 text-xs space-y-1">
+                        <div className="font-medium text-slate-200">{e.jobTitle} {e.company ? `@ ${e.company}` : ''}</div>
+                        {(e.startDate || e.endDate) && (
+                          <div className="text-slate-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {e.startDate}{e.endDate ? ` — ${e.endDate}` : ''}
+                          </div>
+                        )}
+                        <div className="flex items-start gap-1.5 text-slate-400">
+                          <Quote className="w-3 h-3 mt-0.5 shrink-0 text-slate-600" />
+                          <span className="italic text-[11px]">{e.evidenceQuote}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Education */}
+                {aiAnalysis.education?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Education</h3>
+                    {aiAnalysis.education.map(e => (
+                      <div key={e.id} className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/50 text-xs space-y-1">
+                        <div className="font-medium text-slate-200">{e.degree} {e.fieldOfStudy ? `in ${e.fieldOfStudy}` : ''}</div>
+                        {e.institution && <div className="text-slate-400">{e.institution}</div>}
+                        <div className="flex items-start gap-1.5 text-slate-400">
+                          <Quote className="w-3 h-3 mt-0.5 shrink-0 text-slate-600" />
+                          <span className="italic text-[11px]">{e.evidenceQuote}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Projects */}
+                {aiAnalysis.projects?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Projects</h3>
+                    {aiAnalysis.projects.map(p => (
+                      <div key={p.id} className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/50 text-xs space-y-1">
+                        <div className="font-medium text-slate-200">{p.projectName}</div>
+                        {p.technologies && <div className="text-slate-500 font-mono text-[11px]">{p.technologies}</div>}
+                        <div className="flex items-start gap-1.5 text-slate-400">
+                          <Quote className="w-3 h-3 mt-0.5 shrink-0 text-slate-600" />
+                          <span className="italic text-[11px]">{p.evidenceQuote}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {aiAnalysis && aiAnalysis.status === 'FAILED' && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-300">
+                AI analysis could not be completed. Please retry.
+              </div>
+            )}
+
+            {aiAnalysis && aiAnalysis.status === 'UNAVAILABLE' && (
+              <div className="p-3 bg-slate-800/40 border border-slate-700 rounded-lg text-xs text-slate-400">
+                AI analysis unavailable — disabled in server configuration.
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-600">
+              <span>Deterministic parsing always active</span>
+              <span className="text-emerald-500 font-mono">✓</span>
             </div>
           </div>
         </div>
