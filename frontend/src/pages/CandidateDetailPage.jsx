@@ -6,6 +6,7 @@ import documentService from '../services/documentService';
 import applicationService from '../services/applicationService';
 import jobService from '../services/jobService';
 import aiAnalysisService from '../services/aiAnalysisService';
+import githubService from '../services/githubService';
 
 export default function CandidateDetailPage() {
   const { candidateId } = useParams();
@@ -24,21 +25,35 @@ export default function CandidateDetailPage() {
   const [aiError, setAiError] = useState(null);
   const [activeDocId, setActiveDocId] = useState(null);
 
+  // GitHub Evidence Engine state
+  const [githubStatus, setGithubStatus] = useState(null);
+  const [githubRepos, setGithubRepos] = useState([]);
+  const [githubSyncing, setGithubSyncing] = useState(false);
+  const [githubError, setGithubError] = useState(null);
+
   const fetchCandidateDetails = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [candRes, docsRes, appsRes, jobsRes] = await Promise.all([
+      const [candRes, docsRes, appsRes, jobsRes, ghStatusRes] = await Promise.all([
         candidateService.getCandidateById(candidateId),
         documentService.getCandidateDocuments(candidateId),
         applicationService.getCandidateApplications(candidateId),
         jobService.getJobs({ status: 'OPEN' }),
+        githubService.getGithubStatus(candidateId).catch(() => ({ connected: false })),
       ]);
 
       if (candRes.success) setCandidate(candRes.data);
       if (docsRes.success) setDocuments(docsRes.data || []);
       if (appsRes.success) setApplications(appsRes.data || []);
       if (jobsRes.success) setJobs(jobsRes.data.content || []);
+      setGithubStatus(ghStatusRes);
+
+      if (ghStatusRes?.connected) {
+        githubService.getRepositories(candidateId)
+          .then(repos => setGithubRepos(repos || []))
+          .catch(() => {});
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load candidate profile');
     } finally {
@@ -502,6 +517,136 @@ export default function CandidateDetailPage() {
               <span>Deterministic parsing always active</span>
               <span className="text-emerald-500 font-mono">✓</span>
             </div>
+          </div>
+
+          {/* GitHub Evidence Engine Panel */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <Github className="w-4 h-4 text-sky-400" /> GitHub Evidence
+              </h2>
+              {githubStatus?.connected && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <CheckCircle className="w-3 h-3" /> CONNECTED (@{githubStatus.login})
+                </span>
+              )}
+            </div>
+
+            {githubError && (
+              <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-300">
+                {githubError}
+              </div>
+            )}
+
+            {!githubStatus?.connected ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Authorize candidate GitHub identity to collect verifiable repository, language distribution, and commit evidence for the Evidence Graph.
+                </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await githubService.connectGithub(candidateId);
+                      if (res.authorizationUrl) {
+                        window.location.href = res.authorizationUrl;
+                      }
+                    } catch (err) {
+                      setGithubError(err.response?.data?.message || 'Failed to initiate GitHub OAuth');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition-colors"
+                >
+                  <Github className="w-4 h-4 text-sky-400" /> Connect Candidate GitHub
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Sync Status: <span className="text-slate-200 font-mono">{githubStatus.syncStatus || 'IDLE'}</span></span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        setGithubSyncing(true);
+                        setGithubError(null);
+                        try {
+                          await githubService.syncGithub(candidateId);
+                          const updatedStatus = await githubService.getGithubStatus(candidateId);
+                          setGithubStatus(updatedStatus);
+                          const repos = await githubService.getRepositories(candidateId);
+                          setGithubRepos(repos || []);
+                        } catch (err) {
+                          setGithubError(err.response?.data?.message || 'Sync failed.');
+                        } finally {
+                          setGithubSyncing(false);
+                        }
+                      }}
+                      disabled={githubSyncing}
+                      className="px-2.5 py-1 bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 rounded text-[11px] font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${githubSyncing ? 'animate-spin' : ''}`} /> Sync
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm('Disconnect GitHub identity from candidate?')) return;
+                        try {
+                          await githubService.disconnectGithub(candidateId);
+                          setGithubStatus({ connected: false });
+                          setGithubRepos([]);
+                        } catch (err) {
+                          setGithubError(err.response?.data?.message || 'Failed to disconnect.');
+                        }
+                      }}
+                      className="px-2 py-1 text-slate-500 hover:text-red-400 text-[11px] font-medium"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                </div>
+
+                {/* Repositories List */}
+                {githubRepos.length === 0 ? (
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-500 text-center">
+                    No synchronized repositories found. Click Sync to ingest GitHub evidence.
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    {githubRepos.map(repo => (
+                      <div key={repo.id} className="p-3 bg-slate-950 border border-slate-800/80 rounded-lg space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <a
+                            href={repo.htmlUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-sky-400 hover:underline flex items-center gap-1"
+                          >
+                            {repo.fullName} ↗
+                          </a>
+                          <span className="text-[10px] font-mono text-slate-500">★ {repo.starsCount} · 🍴 {repo.forksCount}</span>
+                        </div>
+
+                        {repo.description && (
+                          <p className="text-slate-400 text-[11px] line-clamp-2">{repo.description}</p>
+                        )}
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-900">
+                          <span>Language: <span className="text-slate-300 font-mono">{repo.primaryLanguage || 'None'}</span></span>
+                          {repo.pushedAtGithub && (
+                            <span>Pushed: {new Date(repo.pushedAtGithub).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Factual disclosure */}
+                <div className="pt-2 border-t border-slate-800/60 text-[10px] text-slate-500 space-y-1">
+                  <div>✓ Raw repository observations mapped to Evidence Graph</div>
+                  <div>✓ Zero synthetic developer scores or quality ratings</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
