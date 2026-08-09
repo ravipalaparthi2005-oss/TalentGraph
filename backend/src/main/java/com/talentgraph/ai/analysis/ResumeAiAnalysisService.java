@@ -341,8 +341,9 @@ public class ResumeAiAnalysisService {
     /**
      * Validate that the AI-provided evidence quote is actually present in the source text.
      * Normalizes whitespace before comparison to handle line breaks and extra spaces.
+     * Public for unit testing.
      */
-    boolean isQuotePresent(String sourceText, String quote) {
+    public boolean isQuotePresent(String sourceText, String quote) {
         if (sourceText == null || quote == null || quote.isBlank()) return false;
         String normalizedSource = sourceText.replaceAll("\\s+", " ").toLowerCase();
         String normalizedQuote = quote.replaceAll("\\s+", " ").toLowerCase().strip();
