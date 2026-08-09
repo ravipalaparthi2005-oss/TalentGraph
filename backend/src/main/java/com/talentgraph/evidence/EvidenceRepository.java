@@ -11,4 +11,5 @@ public interface EvidenceRepository extends JpaRepository<Evidence, UUID> {
     List<Evidence> findByCandidateId(UUID candidateId);
     List<Evidence> findByEvidenceSourceId(UUID evidenceSourceId);
     List<Evidence> findByCandidateIdAndEvidenceType(UUID candidateId, EvidenceType evidenceType);
+    java.util.Optional<Evidence> findByCandidateIdAndSourceReference(UUID candidateId, String sourceReference);
 }

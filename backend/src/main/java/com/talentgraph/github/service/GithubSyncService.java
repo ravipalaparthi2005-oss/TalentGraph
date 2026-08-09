@@ -44,6 +44,7 @@ public class GithubSyncService {
     private final CandidateRepository candidateRepository;
     private final OrganizationAuthorizationService authorizationService;
     private final AuditEventService auditEventService;
+    private final GithubEvidenceMapperService evidenceMapperService;
 
     /**
      * Trigger GitHub synchronization for a candidate.
@@ -119,6 +120,9 @@ public class GithubSyncService {
                     }
                 }
             }
+
+            // Map observations to Evidence Graph
+            evidenceMapperService.mapGithubObservationsToEvidence(identity);
 
             // Mark COMPLETED
             syncRun.setStatus(GithubSyncStatus.COMPLETED);

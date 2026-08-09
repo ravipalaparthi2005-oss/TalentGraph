@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface EvidenceSourceRepository extends JpaRepository<EvidenceSource, UUID> {
     List<EvidenceSource> findByCandidateId(UUID candidateId);
     List<EvidenceSource> findByCandidateIdAndSourceType(UUID candidateId, EvidenceSourceType sourceType);
+    java.util.Optional<EvidenceSource> findByCandidateIdAndSourceTypeAndExternalReference(UUID candidateId, EvidenceSourceType sourceType, String externalReference);
 }
