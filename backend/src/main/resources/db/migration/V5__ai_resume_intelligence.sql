@@ -1,8 +1,8 @@
 -- V5: AI Resume Intelligence schema
--- Tracks AI extraction runs, extracted experiences, projects, education, certifications
+-- Tracks AI extraction runs, extracted skill/experience/project/education/certification proposals
 
 CREATE TABLE ai_analysis_runs (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     document_id     UUID NOT NULL REFERENCES candidate_documents(id) ON DELETE RESTRICT,
     provider        VARCHAR(50)  NOT NULL,
     model           VARCHAR(200) NOT NULL,
@@ -25,7 +25,7 @@ CREATE INDEX idx_ai_runs_created_at    ON ai_analysis_runs(created_at);
 
 -- Extracted skill proposals from AI (validated against catalog before becoming Evidence)
 CREATE TABLE ai_extracted_skills (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     run_id          UUID NOT NULL REFERENCES ai_analysis_runs(id) ON DELETE CASCADE,
     skill_name      VARCHAR(200) NOT NULL,
     evidence_quote  TEXT         NOT NULL,
@@ -39,7 +39,7 @@ CREATE INDEX idx_ai_skills_run_id ON ai_extracted_skills(run_id);
 
 -- Extracted work experience proposals
 CREATE TABLE ai_extracted_experiences (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     run_id          UUID NOT NULL REFERENCES ai_analysis_runs(id) ON DELETE CASCADE,
     company         VARCHAR(300),
     job_title       VARCHAR(300),
@@ -54,7 +54,7 @@ CREATE INDEX idx_ai_exp_run_id ON ai_extracted_experiences(run_id);
 
 -- Extracted project proposals
 CREATE TABLE ai_extracted_projects (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     run_id          UUID NOT NULL REFERENCES ai_analysis_runs(id) ON DELETE CASCADE,
     project_name    VARCHAR(300) NOT NULL,
     description     TEXT,
@@ -67,7 +67,7 @@ CREATE INDEX idx_ai_proj_run_id ON ai_extracted_projects(run_id);
 
 -- Extracted education proposals
 CREATE TABLE ai_extracted_education (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     run_id          UUID NOT NULL REFERENCES ai_analysis_runs(id) ON DELETE CASCADE,
     institution     VARCHAR(300),
     degree          VARCHAR(200),
@@ -83,7 +83,7 @@ CREATE INDEX idx_ai_edu_run_id ON ai_extracted_education(run_id);
 
 -- Extracted certification proposals
 CREATE TABLE ai_extracted_certifications (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     run_id          UUID NOT NULL REFERENCES ai_analysis_runs(id) ON DELETE CASCADE,
     certification_name VARCHAR(300) NOT NULL,
     issuing_body    VARCHAR(300),
