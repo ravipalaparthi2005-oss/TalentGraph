@@ -78,12 +78,21 @@ npm run build
 
 ---
 
+## 📦 System Modules & Implementation Progress
+
+- **Phase 01–04**: Multi-Tenant Workspaces, Real Authentication (JWT + Refresh Tokens + Google OAuth), Recruiter Workspaces, Job Requirements & Evaluation Criteria.
+- **Phase 05**: Candidate Intake & Deterministic Resume Processing (PDF/DOCX Apache Tika parsing).
+- **Phase 06**: AI Resume Intelligence (OpenRouter isolation, evidence quote validation, skill catalog mapping, audit logging).
+- **Phase 07**: Real GitHub Evidence Engine (OAuth state protection, AES-256 token encryption, repository/language/commit sync, Evidence Graph integration).
+
+---
+
 ## 📌 Domain Entities (Core Model Outline)
 
 - **Candidate**: Software engineering applicant profile.
-- **Recruiter**: Recruiter or hiring team user.
-- **Organization**: Company or hiring workspace.
+- **Organization**: Multi-tenant workspace.
 - **Job**: Open engineering requisition with specific requirements.
 - **Evidence**: Verifiable record (Resume, GitHub, Assessment, Interview).
+- **GithubIdentity**: Authenticated candidate GitHub account (encrypted tokens).
 - **EvidenceGraph**: Connected skill network linking evidence items to candidates.
 - **HiringDecision**: Auditable record of hiring outcome.
