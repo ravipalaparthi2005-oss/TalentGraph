@@ -1,6 +1,5 @@
 package com.talentgraph.assessment;
 
-import com.talentgraph.candidate.Candidate;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,39 +9,36 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "assessment_attempts")
+@Table(name = "assessment_test_cases")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AssessmentAttempt {
+public class AssessmentTestCase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "application_assessment_id", nullable = false)
-    private ApplicationAssessment applicationAssessment;
+    @JoinColumn(name = "question_id", nullable = false)
+    private AssessmentQuestion question;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "candidate_id", nullable = false)
-    private Candidate candidate;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String input;
+
+    @Column(name = "expected_output", nullable = false, columnDefinition = "TEXT")
+    private String expectedOutput;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(name = "test_case_type", nullable = false, length = 20)
     @Builder.Default
-    private AttemptStatus status = AttemptStatus.NOT_STARTED;
+    private TestCaseType testCaseType = TestCaseType.HIDDEN;
 
-    @Column(name = "started_at")
-    private Instant startedAt;
-
-    @Column(name = "submitted_at")
-    private Instant submittedAt;
-
-    @Column(name = "evaluated_at")
-    private Instant evaluatedAt;
+    @Column(name = "display_order", nullable = false)
+    @Builder.Default
+    private Integer displayOrder = 1;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
